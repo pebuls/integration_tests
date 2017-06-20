@@ -16,6 +16,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import edu.iis.mto.blog.domain.model.AccountStatus;
 import edu.iis.mto.blog.domain.model.User;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+
 @RunWith(SpringRunner.class)
 @DataJpaTest
 public class UserRepositoryTest {
@@ -32,36 +37,57 @@ public class UserRepositoryTest {
     public void setUp() {
         user = new User();
         user.setFirstName("Jan");
+        user.setLastName("Kowalski");
         user.setEmail("john@domain.com");
         user.setAccountStatus(AccountStatus.NEW);
     }
 
-    @Ignore
     @Test
     public void shouldFindNoUsersIfRepositoryIsEmpty() {
 
         List<User> users = repository.findAll();
 
-        Assert.assertThat(users, Matchers.hasSize(0));
+        Assert.assertThat(users, hasSize(0));
     }
 
-    @Ignore
     @Test
     public void shouldFindOneUsersIfRepositoryContainsOneUserEntity() {
         User persistedUser = entityManager.persist(user);
         List<User> users = repository.findAll();
 
-        Assert.assertThat(users, Matchers.hasSize(1));
-        Assert.assertThat(users.get(0).getEmail(), Matchers.equalTo(persistedUser.getEmail()));
+        Assert.assertThat(users, hasSize(1));
+        Assert.assertThat(users.get(0).getEmail(), equalTo(persistedUser.getEmail()));
     }
 
-    @Ignore
     @Test
     public void shouldStoreANewUser() {
 
         User persistedUser = repository.save(user);
 
-        Assert.assertThat(persistedUser.getId(), Matchers.notNullValue());
+        Assert.assertThat(persistedUser.getId(), notNullValue());
+    }
+
+    @Test
+    public void shouldFindUserByLastName() throws Exception {
+        repository.save(user);
+        List<User> users = repository.findByFirstNameContainingOrLastNameContainingOrEmailContainingAllIgnoreCase("abc", user.getLastName(), "123");
+        assertThat(users, not(empty()));
+        assertThat(users, contains(user));
+    }
+
+    @Test
+    public void shouldFindUserByEmail() throws Exception {
+        repository.save(user);
+        List<User> users = repository.findByFirstNameContainingOrLastNameContainingOrEmailContainingAllIgnoreCase("abc", "efg1", user.getEmail());
+        assertThat(users, not(empty()));
+        assertThat(users, contains(user));
+    }
+
+    @Test
+    public void shouldFindUserWhoNotExist() throws Exception {
+        repository.save(user);
+        List<User> users = repository.findByFirstNameContainingOrLastNameContainingOrEmailContainingAllIgnoreCase("abc", "efg1", "2hij");
+        assertThat(users, empty());
     }
 
 }
