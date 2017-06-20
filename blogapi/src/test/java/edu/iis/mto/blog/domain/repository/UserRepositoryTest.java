@@ -40,6 +40,8 @@ public class UserRepositoryTest {
         user.setLastName("Kowalski");
         user.setEmail("john@domain.com");
         user.setAccountStatus(AccountStatus.NEW);
+        repository.deleteAll();
+        repository.flush();
     }
 
     @Test
