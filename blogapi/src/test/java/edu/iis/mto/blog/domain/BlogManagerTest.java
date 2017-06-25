@@ -1,5 +1,9 @@
 package edu.iis.mto.blog.domain;
 
+import edu.iis.mto.blog.domain.errors.DomainError;
+import edu.iis.mto.blog.domain.model.BlogPost;
+import edu.iis.mto.blog.domain.repository.BlogPostRepository;
+import edu.iis.mto.blog.domain.repository.LikePostRepository;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,6 +22,10 @@ import edu.iis.mto.blog.domain.repository.UserRepository;
 import edu.iis.mto.blog.mapper.DataMapper;
 import edu.iis.mto.blog.services.BlogService;
 
+import java.util.Optional;
+
+import static org.mockito.Mockito.when;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class BlogManagerTest {
@@ -25,19 +33,55 @@ public class BlogManagerTest {
     @MockBean
     UserRepository userRepository;
 
+    @MockBean
+    LikePostRepository likePostRepository;
+
+    @MockBean
+    BlogPostRepository blogPostRepository;
+
     @Autowired
     DataMapper dataMapper;
 
     @Autowired
     BlogService blogService;
 
+    private void createAll (AccountStatus accountStatus){
+        User firstUser = new User();
+        firstUser.setId(1L);
+        User userConfirmed = new User();
+        userConfirmed.setAccountStatus(accountStatus);
+        userConfirmed.setId(2L);
+        BlogPost blogPost = new BlogPost();
+        blogPost.setUser(firstUser);
+        when(userRepository.findOne(2L)).thenReturn(userConfirmed);
+        when(blogPostRepository.findOne(1l)).thenReturn(blogPost);
+        when(likePostRepository.findByUserAndPost(userConfirmed, blogPost)).thenReturn(Optional.empty());
+    }
+    
     @Test
     public void creatingNewUserShouldSetAccountStatusToNEW() {
-        blogService.createUser(new UserRequest("John", "Steward", "john@domain.com"));
+        blogService.createUser(new UserRequest("Jan", "Kowalski", "jankkowalski@domain.com"));
         ArgumentCaptor<User> userParam = ArgumentCaptor.forClass(User.class);
         Mockito.verify(userRepository).save(userParam.capture());
         User user = userParam.getValue();
         Assert.assertThat(user.getAccountStatus(), Matchers.equalTo(AccountStatus.NEW));
     }
 
+    @Test
+    public void confirmedUserCanLikePost() throws Exception {
+        createAll(AccountStatus.CONFIRMED);
+        Assert.assertThat(blogService.addLikeToPost(2L, 1L), Matchers.is(true));
+    }
+
+    @Test(expected = DomainError.class)
+    public void NewUserCannotLikePost() throws Exception {
+        createAll(AccountStatus.NEW);
+        blogService.addLikeToPost(2L, 1L);
+    }
+
+    @Test(expected = DomainError.class)
+    public void RemovedUserCannotLikePost() throws Exception {
+        createAll(AccountStatus.REMOVED);
+        blogService.addLikeToPost(2L, 1L);
+    }
 }
