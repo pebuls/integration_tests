@@ -40,9 +40,9 @@ public class LikePostRepositoryTest {
     public void setUp() throws Exception {
         firstUser = userRepository.findOne(1L);
         secondUser = new User();
-        secondUser.setFirstName("Jan");
-        secondUser.setLastName("Kowalski");
-        secondUser.setEmail("jankowalski@domain.com");
+        secondUser.setFirstName("Anna");
+        secondUser.setLastName("Iksinska");
+        secondUser.setEmail("anna@domain.com");
         secondUser.setAccountStatus(AccountStatus.NEW);
         secondUser = userRepository.save(secondUser);
         blogPost = new BlogPost();
