@@ -38,7 +38,7 @@ public class UserRepositoryTest {
         user = new User();
         user.setFirstName("Jan");
         user.setLastName("Kowalski");
-        user.setEmail("john@domain.com");
+        user.setEmail("jankowalski@domain.com");
         user.setAccountStatus(AccountStatus.NEW);
         repository.deleteAll();
         repository.flush();
